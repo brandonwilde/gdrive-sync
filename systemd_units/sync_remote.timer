@@ -1,0 +1,10 @@
+[Unit]
+Description=Run gdrive-sync Remote Sync every minute
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+Unit=gdrive-sync-remote.service
+
+[Install]
+WantedBy=timers.target
