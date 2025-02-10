@@ -47,6 +47,10 @@ check_requirements
 # Source our configuration to get paths
 source "${SCRIPT_DIR}/config.sh"
 
+# Create log directory and file with proper permissions
+install -d -m 755 -o ${USER} -g ${USER} "$(dirname "$LOGFILE")"
+install -m 640 -o ${USER} -g ${USER} /dev/null "$LOGFILE"
+
 # Install required packages
 echo "Installing dependencies..."
 apt update
@@ -136,12 +140,6 @@ systemctl daemon-reload
 echo "Enabling and starting systemd services..."
 systemctl enable --now sync_remote.timer
 systemctl enable --now sync_local.service
-
-# Create log directory with proper permissions
-echo "Creating log directory..."
-mkdir -p /var/log/gdrive-sync
-chown ${USER}:${USER} /var/log/gdrive-sync
-chmod 755 /var/log/gdrive-sync
 
 # Install logrotate configuration
 echo "Installing logrotate configuration..."

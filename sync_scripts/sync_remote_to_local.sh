@@ -6,7 +6,7 @@
 # The script is intended to be run periodically using a cron job.
 
 # Source configuration
-source "$(dirname "$0")/config.sh"
+source "$(dirname "$(dirname "$0")")/config.sh"
 
 generate_prefix() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') | REMOTE |"

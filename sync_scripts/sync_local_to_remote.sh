@@ -6,7 +6,7 @@
 # The script will retry the sync operation if the lock is held by another process.
 
 # Source configuration
-source "$(dirname "$0")/config.sh"
+source "$(dirname "$(dirname "$0")")/config.sh"
 
 generate_prefix() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') | LOCAL |"
