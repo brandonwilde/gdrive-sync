@@ -7,27 +7,66 @@ Keep a local folder in sync with a folder in Google Drive
    ```bash
    git clone https://github.com/brandonwilde/gdrive-sync.git
    cd gdrive-sync
-
-2. **Run the installation script:**
-   ```bash
-   chmod +x install.sh
-   sudo ./install.sh
    ```
-   This script installs required packages, copies systemd and logrotate configuration files, and reloads systemd.
 
-3. **Configure rclone:**
-   If you haven’t already set up rclone for Google Drive, run:
+2. **Install and configure rclone:**
+   The sync scripts use rclone to communicate with Google Drive. Install and configure it:
    ```bash
+   sudo apt install rclone
    rclone config
    ```
-   Then edit sync_remote_to_local.sh and sync_local_to_drive.sh as needed to match your rclone remote name and directories.
+   Follow the prompts to:
+   - Create a new remote drive. Take note of the name you assign it.
+   - Select "Google Drive" as the storage type
+   - Configure access to your Google Drive account
 
-## Usage
+3. **Review configuration:**
+   Edit `config.sh` to customize:
+   - `LOCAL_DIR`: Your local directory to sync
+   - `REMOTE_DIR`: Your rclone-assigned remote name, plus the folder name, in the format "remote:folder"
+   - Other settings like sync delays and log locations
 
-- The remote-to-local sync is run as a systemd timer (see systemd_units/sync_remote.timer), triggering sync_remote_to_local.sh every minute.
-- The local-to-remote sync is managed by a systemd service (see systemd_units/sync-local.service) that runs the inotify-based script continuously.
-- Log output is written to /home/brandon/gdrive_sync.log and rotated automatically by logrotate (see logrotate/gdrive_sync).
+4. **Run the installation:**
+   ```bash
+   sudo ./install.sh
+   ```
+   This will:
+   - Install other required packages (inotify-tools)
+   - Create necessary directories
+   - Set up systemd services and timer
+   - Configure log rotation
 
-## Customization:
+## How it Works
 
-Edit the scripts to adjust variables such as LOCAL_DIR, REMOTE_DIR, and LOCKFILE as needed.
+- **Local to Remote Sync**: A systemd service runs continuously, monitoring your local directory for changes using inotify. When changes are detected, they are synced to Google Drive.
+- **Remote to Local Sync**: A systemd timer triggers every minute to check for changes in Google Drive and sync them to your local directory.
+- **Logging**: All sync operations are logged to the path configured in `config.sh`. Logs are automatically rotated daily.
+
+## Service Management
+
+Check service status:
+```bash
+systemctl status sync_local.service
+systemctl status sync_remote.timer
+```
+
+Stop/start services:
+```bash
+sudo systemctl stop sync_local.service
+sudo systemctl start sync_local.service
+sudo systemctl restart sync_remote.timer
+```
+
+View logs:
+```bash
+tail -f gdrive_sync.log
+```
+
+## Uninstallation
+
+To remove the sync setup:
+```bash
+sudo ./uninstall.sh
+```
+
+This will stop and remove all services, timers, and configurations. Your files in both local and remote locations will remain untouched.
