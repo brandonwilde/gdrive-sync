@@ -5,12 +5,8 @@
 # The script will retry the sync operation if the lock is held by another process.
 # The script is intended to be run periodically using a cron job.
 
-LOCAL_DIR="/home/brandon/ObsidianNotes"
-REMOTE_DIR="gdrive_obsidian:Obsidian"
-LOCKFILE="/tmp/obsidian_sync.lock"
-LOGFILE="/home/brandon/obsidian_sync.log"
-RETRY_DELAY=5  # in seconds
-MAX_RETRIES=5
+# Source configuration
+source "$(dirname "$0")/config.sh"
 
 generate_prefix() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') | REMOTE |"

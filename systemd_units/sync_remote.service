@@ -3,6 +3,6 @@ Description=Google Drive Sync: Remote (Google Drive) to Local
 
 [Service]
 Type=oneshot
-ExecStart=/full/path/to/gdrive-sync/sync_drive_to_local.sh
+ExecStart=/full/path/to/gdrive-sync/sync_remote_to_local.sh
 User=brandon
 Group=brandon

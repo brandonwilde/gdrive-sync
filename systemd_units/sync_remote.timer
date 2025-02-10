@@ -1,10 +1,10 @@
 [Unit]
-Description=Run gdrive-sync Remote Sync every minute
+Description=Run sync_remote_to_local.sh every minute
 
 [Timer]
 OnBootSec=30
 OnUnitActiveSec=60
-Unit=gdrive-sync-remote.service
+Unit=sync_remote.service
 
 [Install]
 WantedBy=timers.target

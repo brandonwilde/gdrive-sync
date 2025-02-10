@@ -5,14 +5,8 @@
 # It uses a lock file to avoid race conditions with another sync.
 # The script will retry the sync operation if the lock is held by another process.
 
-LOCAL_DIR="/home/brandon/ObsidianNotes"
-REMOTE_DIR="gdrive_obsidian:Obsidian"
-LOCKFILE="/tmp/obsidian_sync.lock"
-LOGFILE="/home/brandon/obsidian_sync.log"
-RETRY_DELAY=5  # in seconds
-MAX_RETRIES=5
-DEBOUNCE_DELAY=4  # in seconds
-LAST_CHANGE_FILE="/tmp/obsidian_last_change"
+# Source configuration
+source "$(dirname "$0")/config.sh"
 
 generate_prefix() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') | LOCAL |"
