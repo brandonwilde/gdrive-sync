@@ -18,34 +18,54 @@ cleanup() {
 
 sync_from_local_to_drive() {
     local filename="$1"
-    echo "$(generate_prefix) Syncing local ('$filename') to Google Drive" >> "$LOGFILE"
-    retries=0
-    while [ -e "$LOCKFILE" ]; do
-        retries=$((retries + 1))
-        if [[ $retries -ge $MAX_RETRIES ]]; then
-            echo "$(generate_prefix) Max retries reached, skipping sync of ('$filename')." >> "$LOGFILE"
-            return 1
+    local retry_count=0
+
+    # Create lockfile if it doesn't exist
+    touch "$LOCKFILE"
+    exec 9>"$LOCKFILE"  # Assign file descriptor 9 to the lockfile
+
+    # Acquire lock with timeout
+    if ! flock -n 9; then
+        echo "$(generate_prefix) WARNING: Another instance is already running, skipping sync" >> "$LOGFILE"
+        exec 9>&-  # Release file descriptor
+        return
+    fi
+
+    # Log the start of the sync
+    echo "$(generate_prefix) INFO: Starting sync triggered by \"$filename\"" >> "$LOGFILE"
+
+    while [ $retry_count -lt $MAX_RETRIES ]; do
+        # Perform the sync
+        OUTPUT=$(rclone sync --track-renames "$LOCAL_DIR" "$REMOTE_DIR" 2>&1)
+        
+        # Check for specific error conditions
+        if [[ $OUTPUT == *"corrupted on transfer"* ]] || [[ $OUTPUT == *"md5 hashes differ"* ]]; then
+            retry_count=$((retry_count + 1))
+            echo "$(generate_prefix) WARNING: MD5 mismatch detected (attempt $retry_count/$MAX_RETRIES)" >> "$LOGFILE"
+            
+            if [ $retry_count -lt $MAX_RETRIES ]; then
+                echo "$(generate_prefix) INFO: Waiting $RETRY_DELAY seconds before retry..." >> "$LOGFILE"
+                sleep $RETRY_DELAY
+                continue
+            fi
         fi
-        echo "$(generate_prefix) Lock held by another process, retrying in $RETRY_DELAY seconds..." >> "$LOGFILE"
-        sleep $RETRY_DELAY
+
+        # Log the output based on success/failure
+        if [[ $OUTPUT == *"ERROR"* ]]; then
+            echo "$(generate_prefix) ERROR: Sync failed after $retry_count retries" >> "$LOGFILE"
+            echo "$(generate_prefix) ERROR | $OUTPUT" >> "$LOGFILE"
+        else
+            echo "$(generate_prefix) SUCCESS: Sync completed" >> "$LOGFILE"
+            if [ "$OUTPUT" != "" ]; then
+                echo "$(generate_prefix) INFO | $OUTPUT" >> "$LOGFILE"
+            fi
+            break
+        fi
     done
 
-    trap cleanup EXIT INT TERM HUP
-
-    touch "$LOCKFILE"
-
-    OUTPUT=$(rclone sync --checksum --track-renames "$LOCAL_DIR" "$REMOTE_DIR" 2>&1)
-    
-    while IFS= read -r line; do {
-        if [[ $line == *"ERROR"* ]]; then
-            echo "$(generate_prefix) ERROR | $line" >> "$LOGFILE"
-        else
-            echo "$(generate_prefix) SUCCESS | $line" >> "$LOGFILE"
-        fi
-    }
-    done <<< "$OUTPUT"
-
-    cleanup
+    # Release lock and close descriptor
+    flock -u 9
+    exec 9>&-
 }
 
 # Initialize the last change file
@@ -57,7 +77,7 @@ while read -r directory events filename; do
     # if filename doesn't end with .partial
     if [[ "$filename" != *.partial ]]; then
         # Update the last change time
-        date +%s > "$LAST_CHANGE_FILE"
+        date +%s%N > "$LAST_CHANGE_FILE"
         
         # Start a background process to handle the debounced sync
         (
