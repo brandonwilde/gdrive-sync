@@ -20,13 +20,20 @@ Keep a local folder in sync with a folder in Google Drive
    - Select "Google Drive" as the storage type
    - Configure access to your Google Drive account
 
+   The configuration will be saved to `~/.config/rclone/rclone.conf`. This location is important as the sync services are configured to use your user's rclone configuration file.
+
 3. **Review configuration:**
    Edit `config.sh` to customize:
    - `LOCAL_DIR`: Your local directory to sync
    - `REMOTE_DIR`: Your rclone-assigned remote name, plus the folder name, in the format "remote:folder"
    - Other settings like sync delays and log locations
 
-4. **Run the installation:**
+4. **Make scripts executable:**
+   ```bash
+   chmod +x install.sh uninstall.sh
+   ```
+
+5. **Run the installation:**
    ```bash
    sudo ./install.sh
    ```
@@ -59,7 +66,14 @@ sudo systemctl restart sync_remote.timer
 
 View logs:
 ```bash
-tail -f gdrive_sync.log
+# View current log
+tail -f /var/log/gdrive-sync/gdrive_sync.log
+
+# List all logs (including rotated ones)
+ls -l /var/log/gdrive-sync/gdrive_sync.log*
+
+# View a compressed rotated log (this example views the log from 3 days ago)
+zcat /var/log/gdrive-sync/gdrive_sync.log.3.gz
 ```
 
 ## Uninstallation

@@ -44,12 +44,18 @@ check_requirements() {
 # Run requirement checks
 check_requirements
 
+# Get the actual user who ran sudo
+ACTUAL_USER=$(who am i | awk '{print $1}')
+if [ -z "$ACTUAL_USER" ]; then
+    ACTUAL_USER=$(logname)
+fi
+
 # Source our configuration to get paths
 source "${SCRIPT_DIR}/config.sh"
 
 # Create log directory and file with proper permissions
-install -d -m 755 -o ${USER} -g ${USER} "$(dirname "$LOGFILE")"
-install -m 640 -o ${USER} -g ${USER} /dev/null "$LOGFILE"
+install -d -m 755 -o ${ACTUAL_USER} -g ${ACTUAL_USER} "$(dirname "$LOGFILE")"
+install -m 640 -o ${ACTUAL_USER} -g ${ACTUAL_USER} /dev/null "$LOGFILE"
 
 # Install required packages
 echo "Installing dependencies..."
@@ -63,7 +69,7 @@ apt install -y inotify-tools
 # Create necessary directories
 echo "Creating directories..."
 mkdir -p "${LOCAL_DIR}"
-chown "${USER}:${USER}" "${LOCAL_DIR}"
+chown "${ACTUAL_USER}:${ACTUAL_USER}" "${LOCAL_DIR}"
 mkdir -p "${SCRIPT_DIR}/systemd_units"
 mkdir -p "${SCRIPT_DIR}/logrotate"
 
@@ -77,9 +83,10 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+Environment="RCLONE_CONFIG=/home/${ACTUAL_USER}/.config/rclone/rclone.conf"
 ExecStart=${SCRIPT_DIR}/sync_scripts/sync_remote_to_local.sh
-User=${USER}
-Group=${USER}
+User=${ACTUAL_USER}
+Group=${ACTUAL_USER}
 
 [Install]
 WantedBy=multi-user.target
@@ -105,9 +112,10 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+Environment="RCLONE_CONFIG=/home/${ACTUAL_USER}/.config/rclone/rclone.conf"
 ExecStart=${SCRIPT_DIR}/sync_scripts/sync_local_to_remote.sh
-User=${USER}
-Group=${USER}
+User=${ACTUAL_USER}
+Group=${ACTUAL_USER}
 Restart=always
 RestartSec=10
 
@@ -123,7 +131,7 @@ ${LOGFILE} {
     delaycompress
     missingok
     notifempty
-    create 640 ${USER} ${USER}
+    create 640 ${ACTUAL_USER} ${ACTUAL_USER}
 }
 EOL
 
