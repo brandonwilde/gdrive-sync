@@ -1,4 +1,4 @@
-# gdrive-sync
+# gdrive-sync [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/brandonwilde/gdrive-sync)
 Keep a local folder in sync with a folder in Google Drive
 
 ## Installation
