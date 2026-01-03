@@ -1,9 +1,15 @@
 #!/bin/bash
-
-# This script syncs the Obsidian notes from Google Drive to the local machine.
-# It uses a lock file to avoid race conditions with another sync.
-# The script will retry the sync operation if the lock is held by another process.
-# The script is intended to be run periodically using a cron job.
+#
+# sync_remote_to_local.sh - Sync changes from Google Drive to local directory
+#
+# This script is triggered periodically by a systemd timer (every minute) to pull
+# changes from Google Drive to the local directory.
+#
+# Safety features:
+# - No delete restrictions (Google Drive is the source of truth)
+# - Skips sync if local changes occurred in last 10 seconds (prevents conflicts)
+# - Uses lock file to prevent concurrent syncs
+# - Retries on MD5 hash mismatches
 
 # Source configuration
 source "$(dirname "$(dirname "$0")")/config.sh"

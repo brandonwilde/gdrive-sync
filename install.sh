@@ -60,7 +60,7 @@ install -m 640 -o ${ACTUAL_USER} -g ${ACTUAL_USER} /dev/null "$LOGFILE"
 # Install required packages
 echo "Installing dependencies..."
 apt update
-apt install -y inotify-tools
+apt install -y inotify-tools zenity
 
 # Optionally, copy a preconfigured rclone.conf (if available)
 # echo "Copying rclone configuration..."

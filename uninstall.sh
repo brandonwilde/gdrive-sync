@@ -39,5 +39,5 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo "Uninstallation complete!"
-echo "Note: rclone and inotify-tools packages were not removed."
-echo "If you want to remove them, run: apt remove rclone inotify-tools"
+echo "Note: rclone, inotify-tools, and zenity packages were not removed."
+echo "If you want to remove them, run: apt remove rclone inotify-tools zenity"

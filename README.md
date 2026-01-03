@@ -19,6 +19,7 @@ Keep a local folder in sync with a folder in Google Drive
    - Create a new remote drive. Take note of the name you assign it.
    - Select "Google Drive" as the storage type
    - Configure access to your Google Drive account
+   - Accept default config
 
    The configuration will be saved to `~/.config/rclone/rclone.conf`. This location is important as the sync services are configured to use your user's rclone configuration file.
 
@@ -38,7 +39,7 @@ Keep a local folder in sync with a folder in Google Drive
    sudo ./install.sh
    ```
    This will:
-   - Install other required packages (inotify-tools)
+   - Install other required packages (inotify-tools, zenity)
    - Create necessary directories
    - Set up systemd services and timer
    - Configure log rotation
@@ -48,6 +49,22 @@ Keep a local folder in sync with a folder in Google Drive
 - **Local to Remote Sync**: A systemd service runs continuously, monitoring your local directory for changes using inotify. When changes are detected, they are synced to Google Drive.
 - **Remote to Local Sync**: A systemd timer triggers every minute to check for changes in Google Drive and sync them to your local directory.
 - **Logging**: All sync operations are logged to the path configured in `config.sh`. Logs are automatically rotated daily.
+
+### Safety Features
+
+The sync scripts include safety checks for **local-to-remote syncs only** (remote-to-local is unrestricted since Google Drive is your source of truth):
+
+- **Delete Confirmation**: If a sync would delete more than `MAX_DELETE_COUNT` files (default: 5), you'll get a dialog prompt to approve or cancel.
+- **Rename Detection**: Uses `rclone --track-renames` so renamed files don't count as deletions.
+- **User Dialog**: A popup asks you to confirm any sync that would delete multiple files. If you cancel, local-to-remote sync is disabled until you investigate and re-enable it.
+
+**If sync gets disabled:** Remove `/tmp/gdrive_sync_disabled` and restart the service:
+```bash
+rm /tmp/gdrive_sync_disabled
+sudo systemctl restart sync_local.service
+```
+
+You can adjust `MAX_DELETE_COUNT` in `config.sh` if 5 is too sensitive for your workflow. Check `/var/log/gdrive-sync/gdrive_sync.log` for details on any blocked syncs.
 
 ## Service Management
 
